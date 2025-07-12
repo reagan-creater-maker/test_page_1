@@ -1,17 +1,771 @@
-<!doctype html>
-<html>
-  <head>
-    <link href="style.css" rel="stylesheet" type="text/css" />
-    <meta charset="utf-8" />
-    <title>my first project</title>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>6학년 수학 방탈출</title>
+    <style>
+        /* CSS 시작 */
+        body {
+            margin: 0;
+            overflow: hidden; /* 스크롤바 방지 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none; /* 텍스트 선택 방지 */
+        }
 
-    <button onclick="magic(event)"><button_size> hello world!!!!!!!!</button>
-    <p>hello world!</p>
-    <h2>Hello world!</h2>
-    <script src = "script.js"></script>
+        /* 시작 화면 스타일 */
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            background-color: #e0f2f7; /* 밝은 파랑 배경 */
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
 
+        #start-screen h1 {
+            color: #2196f3;
+            font-size: 3em;
+            margin-bottom: 30px;
+        }
+
+        #start-screen .input-group {
+            margin-bottom: 15px;
+        }
+
+        #start-screen label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        #start-screen input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1.1em;
+            width: 200px;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        #start-game-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.5em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        #start-game-btn:hover {
+            background-color: #45a049;
+        }
+
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1024px; /* 태블릿 가로 모드 기준 */
+            aspect-ratio: 16 / 9; /* 이미지 비율에 맞춤 */
+            overflow: hidden;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            display: none; /* 초기에는 숨김 */
+        }
+
+        #room-display {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #room-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 */
+            display: block;
+        }
+
+        /* 핫스팟 기본 스타일 */
+        .hotspot {
+            position: absolute;
+            /* border: 2px dashed rgba(255, 0, 0, 0.5); /* 개발 중 시각화용, 배포 시 제거 */
+            cursor: pointer;
+            z-index: 10;
+            transition: background-color 0.2s;
+        }
+
+        .hotspot:hover {
+            background-color: rgba(255, 255, 0, 0.1); /* 마우스 오버 시 효과 */
+        }
+
+        /* 각 핫스팟의 위치와 크기 (제공된 이미지를 보고 정밀 조정) */
+        #hotspot-monitor { top: 39%; left: 88%; width: 8%; height: 18%; } /* 우측 책상 위의 모니터 */
+        #hotspot-blackboard { top: 25%; left: 28%; width: 44%; height: 30%; } /* 중앙 칠판 */
+        #hotspot-open-book { top: 70%; left: 47%; width: 3%; height: 3%; } /* 가장 가까운 책상 위의 펼쳐진 책 */
+        #hotspot-projector { top: 5%; left: 47%; width: 7%; height: 8%; } /* 천장에 달린 빔 프로젝터 */
+        #hotspot-door { top: 20%; left: 87%; width: 10%; height: 65%; } /* 교실 문 (탈출 오브젝트) */
+
+        /* 타이머 스타일 */
+        #game-timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 1.5em;
+            z-index: 1000; /* 다른 요소 위에 표시 */
+            font-family: 'Consolas', monospace; /* 고정폭 폰트로 시간 표시 일관성 유지 */
+        }
+
+
+        /* 퍼즐 오버레이 및 모달 */
+        .hidden {
+            display: none !important;
+        }
+
+        #puzzle-overlay, #password-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #puzzle-content, .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+
+        #puzzle-content h3, .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        #puzzle-content p, .modal-content p {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        #puzzle-content input, .modal-content input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            text-align: center;
+        }
+
+        #puzzle-content button, .modal-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #puzzle-content button:hover, .modal-content button:hover {
+            background-color: #45a049;
+        }
+
+        /* 메모리 카드 게임 스타일 */
+        #memory-game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4열로 배열 */
+            gap: 10px;
+            width: 100%;
+            max-width: 400px; /* 적절한 크기 */
+            margin: 20px auto;
+            perspective: 1000px;
+        }
+
+        .memory-card {
+            width: 80px; /* 카드의 너비 */
+            height: 100px; /* 카드의 높이 */
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
+        .memory-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            border-radius: 5px;
+        }
+
+        .card-front {
+            background-color: #4CAF50; /* 카드 뒷면 색상 */
+            color: white;
+            font-weight: bold;
+        }
+
+        .card-back {
+            background-color: #f0f0f0; /* 카드 앞면 배경 */
+            transform: rotateY(180deg);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #333;
+        }
+
+        /* 게임 종료 화면 */
+        #game-end-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            text-align: center;
+        }
+
+        #game-end-screen h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #ffd700; /* 금색 */
+        }
+
+        #game-end-screen p {
+            font-size: 1.5em;
+            margin-bottom: 40px;
+        }
+
+        #game-end-screen button {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #game-end-screen button:hover {
+            background-color: #0056b3;
+        }
+
+        /* 모바일/태블릿 가로 모드 (넓이 768px 이상) */
+        @media (min-width: 768px) {
+            #game-container {
+                height: auto; /* 높이를 자동으로 조절하여 비율 유지 */
+            }
+        }
+        /* CSS 끝 */
+    </style>
+</head>
+<body>
+    <!-- 게임 시작 화면 -->
+    <div id="start-screen">
+        <h1>6학년 수학 방탈출 게임</h1>
+        <div class="input-group">
+            <label for="student-grade">학년:</label>
+            <input type="text" id="student-grade" placeholder="예: 6" value="6">
+        </div>
+        <div class="input-group">
+            <label for="student-class">반:</label>
+            <input type="text" id="student-class" placeholder="예: 1" value="1">
+        </div>
+        <div class="input-group">
+            <label for="student-name">이름:</label>
+            <input type="text" id="student-name" placeholder="예: 김철수" value="김철수">
+        </div>
+        <button id="start-game-btn">시작하기</button>
+    </div>
+
+    <!-- 실제 게임 컨테이너 (초기에는 숨김) -->
+    <div id="game-container">
+        <div id="game-timer">00:00</div> <!-- 시간 표시 요소 추가 -->
+        <div id="room-display">
+            <!--
+                ***** 이 부분이 수정되었습니다! classroom.jpg 파일을 이 index.html 파일과 같은 폴더에 넣어주세요. *****
+            -->
+            <img id="room-image" src="classroom.jpg" alt="초등학교 교실">
+
+            <!-- 클릭 가능한 오브젝트 (핫스팟) -->
+            <div class="hotspot" id="hotspot-monitor"></div>
+            <div class="hotspot" id="hotspot-blackboard"></div>
+            <div class="hotspot" id="hotspot-open-book"></div>
+            <div class="hotspot" id="hotspot-projector"></div>
+            <div class="hotspot" id="hotspot-door"></div>
+        </div>
+
+        <!-- 퍼즐/문제 오버레이 -->
+        <div id="puzzle-overlay" class="hidden">
+            <div id="puzzle-content">
+                <!-- 퍼즐 내용이 여기에 동적으로 로드됩니다 -->
+            </div>
+            <button id="close-puzzle-btn">닫기</button>
+        </div>
+
+        <!-- 비밀번호 입력 모달 -->
+        <div id="password-modal" class="hidden">
+            <div class="modal-content">
+                <h3>교실 문 잠금 해제</h3>
+                <p>수집한 힌트를 조합하여 비밀번호를 입력하세요.</p>
+                <input type="text" id="final-password-input" placeholder="비밀번호 4자리">
+                <button id="submit-password-btn">탈출!</button>
+                <p id="password-feedback"></p>
+                <button id="close-password-modal-btn">닫기</button>
+            </div>
+        </div>
+
+        <!-- 게임 종료 화면 -->
+        <div id="game-end-screen" class="hidden">
+            <h2>탈출 성공!</h2>
+            <p>축하합니다! 모든 수학 문제를 풀고 교실을 탈출했습니다!</p>
+            <p id="final-time"></p> <!-- 최종 시간 표시 요소 추가 -->
+            <button id="restart-game-btn">다시 시작</button>
+        </div>
+    </div>
+
+    <script>
+        /* JavaScript 시작 */
+        document.addEventListener('DOMContentLoaded', () => {
+            // 시작 화면 요소
+            const startScreen = document.getElementById('start-screen');
+            const startGameBtn = document.getElementById('start-game-btn');
+            const studentGradeInput = document.getElementById('student-grade');
+            const studentClassInput = document.getElementById('student-class');
+            const studentNameInput = document.getElementById('student-name');
+
+            // 게임 화면 요소
+            const gameContainer = document.getElementById('game-container');
+            const puzzleOverlay = document.getElementById('puzzle-overlay');
+            const puzzleContent = document.getElementById('puzzle-content');
+            const closePuzzleBtn = document.getElementById('close-puzzle-btn');
+            const passwordModal = document.getElementById('password-modal');
+            const closePasswordModalBtn = document.getElementById('close-password-modal-btn');
+            const finalPasswordInput = document.getElementById('final-password-input');
+            const submitPasswordBtn = document.getElementById('submit-password-btn');
+            const passwordFeedback = document.getElementById('password-feedback');
+            const gameEndScreen = document.getElementById('game-end-screen');
+            const restartGameBtn = document.getElementById('restart-game-btn');
+
+            // 핫스팟 요소들
+            const hotspotMonitor = document.getElementById('hotspot-monitor');
+            const hotspotBlackboard = document.getElementById('hotspot-blackboard');
+            const hotspotOpenBook = document.getElementById('hotspot-open-book'); // 책상 위 펼쳐진 책
+            const hotspotProjector = document.getElementById('hotspot-projector');
+            const hotspotDoor = document.getElementById('hotspot-door');
+
+            // 타이머 요소
+            const gameTimerDisplay = document.getElementById('game-timer');
+            const finalTimeDisplay = document.getElementById('final-time'); // 최종 시간 표시용
+
+            const CORRECT_PASSWORD = '2963'; // 최종 비밀번호
+
+            // 게임 상태 변수: 수집된 비밀번호 숫자 (2963)
+            let collectedDigits = {
+                digit1: null, // 모니터 (2)
+                digit2: null, // 칠판 (9)
+                digit3: null, // 책 (6)
+                digit4: null  // 빔 프로젝터 (3) - 메모리 게임 결과
+            };
+            let solvedHotspots = {}; // 해결된 핫스팟을 추적 (재클릭 시 메시지 표시용)
+
+            // 타이머 변수
+            let startTime;
+            let timerInterval;
+            let finalElapsedTime = 0; // 게임 종료 시 최종 시간 저장
+
+            // --- 시작 화면 이벤트 리스너 ---
+            startGameBtn.addEventListener('click', () => {
+                const grade = studentGradeInput.value.trim();
+                const studentClass = studentClassInput.value.trim();
+                const name = studentNameInput.value.trim();
+
+                if (grade && studentClass && name) {
+                    // 입력값 유효하면 시작 화면 숨기고 게임 화면 표시
+                    startScreen.style.display = 'none';
+                    gameContainer.style.display = 'block'; // 또는 'flex' 등 레이아웃에 맞게
+                    console.log(`게임 시작! 학년: ${grade}, 반: ${studentClass}, 이름: ${name}`);
+                    startTimer(); // 게임 시작과 동시에 타이머 시작
+                } else {
+                    alert('학년, 반, 이름을 모두 입력해주세요.');
+                }
+            });
+
+            // --- 타이머 함수 ---
+            function startTimer() {
+                startTime = new Date(); // 현재 시간으로 시작 시간 설정
+                timerInterval = setInterval(updateTimerDisplay, 1000); // 1초마다 시간 업데이트
+            }
+
+            function updateTimerDisplay() {
+                const currentTime = new Date();
+                const elapsedTimeInSeconds = Math.floor((currentTime - startTime) / 1000); // 경과 시간 (초)
+                finalElapsedTime = elapsedTimeInSeconds; // 최종 경과 시간 업데이트
+
+                const minutes = Math.floor(elapsedTimeInSeconds / 60); // 분 계산
+                const seconds = elapsedTimeInSeconds % 60; // 초 계산
+
+                // '00:00' 형식으로 포맷팅
+                const formattedTime =
+                    String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+                gameTimerDisplay.textContent = formattedTime; // 화면에 시간 표시
+            }
+
+            function stopTimer() {
+                clearInterval(timerInterval); // 타이머 중지
+            }
+
+            // --- 게임 화면 이벤트 리스너 ---
+
+            // 수학 문제 1: 모니터 (비밀번호 첫 번째 숫자 '2' 획득)
+            hotspotMonitor.addEventListener('click', () => startMathProblem(
+                'monitor',
+                '어떤 수의 3배에서 4를 빼면 2가 됩니다. 어떤 수는 무엇일까요?', // 3x - 4 = 2 => 3x = 6 => x = 2
+                '2',
+                'digit1'
+            ));
+
+            // 수학 문제 2: 칠판 (비밀번호 두 번째 숫자 '9' 획득)
+            hotspotBlackboard.addEventListener('click', () => startMathProblem(
+                'blackboard',
+                '넓이가 81cm²인 정사각형의 한 변의 길이는 몇 cm일까요?', // sqrt(81) = 9
+                '9',
+                'digit2'
+            ));
+
+            // 수학 문제 3: 책 (비밀번호 세 번째 숫자 '6' 획득)
+            hotspotOpenBook.addEventListener('click', () => startMathProblem(
+                'open-book',
+                '세 자리 수 123의 각 자리 숫자의 합은 무엇일까요?', // 1+2+3 = 6
+                '6',
+                'digit3'
+            ));
+
+            // 미니게임: 빔 프로젝터 (메모리 카드 게임, 완료 시 비밀번호 네 번째 숫자 '3' 획득)
+            hotspotProjector.addEventListener('click', startMemoryGame);
+
+
+            // 교실 문 클릭 (탈출 시도)
+            hotspotDoor.addEventListener('click', () => {
+                // 모든 비밀번호 숫자가 수집되었는지 확인
+                const allDigitsCollected = Object.values(collectedDigits).every(digit => digit !== null);
+
+                if (allDigitsCollected) {
+                    openPasswordModal();
+                } else {
+                    alert('문이 잠겨있습니다! 모든 오브젝트를 탐색하여 비밀번호 힌트를 모아야 합니다.');
+                }
+            });
+
+            closePuzzleBtn.addEventListener('click', () => {
+                puzzleOverlay.classList.add('hidden');
+                puzzleContent.innerHTML = ''; // 퍼즐 내용 초기화
+            });
+
+            closePasswordModalBtn.addEventListener('click', () => {
+                passwordModal.classList.add('hidden');
+                passwordFeedback.textContent = ''; // 피드백 메시지 초기화
+                finalPasswordInput.value = ''; // 입력창 초기화
+            });
+
+            submitPasswordBtn.addEventListener('click', () => {
+                const enteredPassword = finalPasswordInput.value.trim();
+                if (enteredPassword === CORRECT_PASSWORD) {
+                    stopTimer(); // 게임 성공 시 타이머 중지
+                    passwordFeedback.textContent = '정답입니다! 방을 탈출했습니다!';
+                    passwordFeedback.style.color = 'green';
+                    setTimeout(() => {
+                        passwordModal.classList.add('hidden');
+                        gameEndScreen.classList.remove('hidden');
+
+                        // 최종 시간 표시
+                        const finalMinutes = Math.floor(finalElapsedTime / 60);
+                        const finalSeconds = finalElapsedTime % 60;
+                        finalTimeDisplay.textContent = `소요 시간: ${String(finalMinutes).padStart(2, '0')}분 ${String(finalSeconds).padStart(2, '0')}초`;
+
+                    }, 1000);
+                } else {
+                    passwordFeedback.textContent = '틀린 비밀번호입니다. 다시 시도해보세요.';
+                    passwordFeedback.style.color = 'red';
+                }
+            });
+
+            restartGameBtn.addEventListener('click', () => {
+                location.reload(); // 페이지 새로고침으로 게임 다시 시작 (모든 상태 초기화)
+            });
+
+            // --- 게임 로직 함수 ---
+
+            function showHint(sourceName, hintText) {
+                if (solvedHotspots[sourceName]) {
+                    puzzleOverlay.classList.remove('hidden');
+                    puzzleContent.innerHTML = `
+                        <h3>${sourceName}</h3>
+                        <p>이미 힌트를 확인했습니다: ${hintText}</p>
+                    `;
+                    return;
+                }
+                puzzleOverlay.classList.remove('hidden');
+                puzzleContent.innerHTML = `
+                    <h3>${sourceName}에서 힌트 발견!</h3>
+                    <p>${hintText}</p>
+                `;
+                solvedHotspots[sourceName] = true;
+                markHotspotSolved(sourceName);
+            }
+
+            function startMathProblem(sourceId, question, correctAnswer, digitKey) {
+                if (collectedDigits[digitKey] !== null) {
+                    puzzleOverlay.classList.remove('hidden');
+                    puzzleContent.innerHTML = `
+                        <h3>${sourceId}</h3>
+                        <p>이곳에서는 이미 비밀번호 힌트 '${collectedDigits[digitKey]}'를 얻었습니다.</p>
+                    `;
+                    return;
+                }
+
+                puzzleOverlay.classList.remove('hidden');
+                puzzleContent.innerHTML = `
+                    <h3>수학 문제</h3>
+                    <p>${question}</p>
+                    <input type="text" id="math-answer" placeholder="정답을 입력하세요">
+                    <button id="submit-math-answer">확인</button>
+                    <p id="math-feedback"></p>
+                `;
+
+                const submitMathAnswerBtn = document.getElementById('submit-math-answer');
+                const mathAnswerInput = document.getElementById('math-answer');
+                const mathFeedback = document.getElementById('math-feedback');
+
+                submitMathAnswerBtn.onclick = () => {
+                    const userAnswer = mathAnswerInput.value.trim();
+                    if (userAnswer === correctAnswer) {
+                        mathFeedback.textContent = '정답입니다! 비밀번호 힌트: ' + correctAnswer;
+                        mathFeedback.style.color = 'green';
+                        collectedDigits[digitKey] = correctAnswer; // 해당 숫자 저장
+                        solvedHotspots[sourceId] = true; // 핫스팟 해결 상태 저장
+                        markHotspotSolved(sourceId); // 핫스팟 시각적 표시
+                        setTimeout(() => {
+                            puzzleOverlay.classList.add('hidden');
+                            puzzleContent.innerHTML = '';
+                        }, 1500);
+                    } else {
+                        mathFeedback.textContent = '틀렸습니다. 다시 생각해보세요.';
+                        mathFeedback.style.color = 'red';
+                    }
+                };
+            }
+
+            function markHotspotSolved(sourceId) {
+                const hotspot = document.getElementById('hotspot-' + sourceId);
+                if (hotspot) {
+                    hotspot.style.cursor = 'default';
+                    hotspot.style.opacity = '0.5'; // 완료된 핫스팟 흐리게
+                }
+            }
+
+
+            // --- 메모리 카드 게임 로직 ---
+            // 카드에 표시될 텍스트 (이미지가 없는 경우)
+            let cardsArray = [
+                { name: 'circle', display: '원' }, { name: 'circle', display: '원' },
+                { name: 'square', display: '정사각형' }, { name: 'square', display: '정사각형' },
+                { name: 'triangle', display: '삼각형' }, { name: 'triangle', display: '삼각형' },
+                { name: 'star', display: '별' }, { name: 'star', display: '별' }
+            ];
+
+            let firstCard = null;
+            let secondCard = null;
+            let lockBoard = false;
+            let matchesFound = 0;
+            const totalMatches = cardsArray.length / 2;
+            const MEMORY_GAME_SOLVE_DIGIT = '3'; // 메모리 게임 완료 시 획득할 비밀번호 숫자
+
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+
+            function startMemoryGame() {
+                if (collectedDigits.digit4 !== null) { // 이미 메모리 게임을 통해 digit4를 얻었다면
+                    puzzleOverlay.classList.remove('hidden');
+                    puzzleContent.innerHTML = `
+                        <h3>빔 프로젝터</h3>
+                        <p>이미 기억력 게임을 성공하여 비밀번호 힌트 '${collectedDigits.digit4}'를 얻었습니다.</p>
+                    `;
+                    return;
+                }
+
+                puzzleOverlay.classList.remove('hidden');
+                puzzleContent.innerHTML = `
+                    <h3>기억력 게임 (짝 맞추기)</h3>
+                    <p>같은 도형의 카드를 찾아 짝을 맞춰보세요!</p>
+                    <div id="memory-game-board"></div>
+                    <p id="memory-feedback"></p>
+                `;
+                initMemoryGame();
+            }
+
+            function initMemoryGame() {
+                const gameBoard = document.getElementById('memory-game-board');
+                gameBoard.innerHTML = '';
+                shuffle(cardsArray);
+                matchesFound = 0;
+                firstCard = null;
+                secondCard = null;
+                lockBoard = false;
+
+                cardsArray.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.classList.add('memory-card');
+                    card.dataset.name = item.name;
+                    card.dataset.id = index;
+                    card.innerHTML = `
+                        <div class="card-inner">
+                            <div class="card-front">?</div>
+                            <div class="card-back">${item.display}</div>
+                        </div>
+                    `;
+                    card.addEventListener('click', flipCard);
+                    gameBoard.appendChild(card);
+                });
+            }
+
+            function flipCard() {
+                if (lockBoard) return;
+                if (this === firstCard) return;
+
+                this.classList.add('flipped');
+
+                if (!firstCard) {
+                    firstCard = this;
+                    return;
+                }
+
+                secondCard = this;
+                lockBoard = true;
+
+                checkForMatch();
+            }
+
+            function checkForMatch() {
+                const isMatch = firstCard.dataset.name === secondCard.dataset.name;
+                const memoryFeedback = document.getElementById('memory-feedback');
+
+                if (isMatch) {
+                    memoryFeedback.textContent = '짝 맞춤 성공!';
+                    memoryFeedback.style.color = 'green';
+                    disableCards();
+                    matchesFound++;
+                    if (matchesFound === totalMatches) {
+                        memoryFeedback.textContent = `모든 짝을 맞췄습니다! 비밀번호 힌트: ${MEMORY_GAME_SOLVE_DIGIT}`;
+                        collectedDigits.digit4 = MEMORY_GAME_SOLVE_DIGIT; // 메모리 게임 완료 시 digit4 획득
+                        solvedHotspots['projector'] = true; // 핫스팟 해결 상태 저장
+                        markHotspotSolved('projector');
+                        setTimeout(() => {
+                            puzzleOverlay.classList.add('hidden');
+                            puzzleContent.innerHTML = '';
+                        }, 2000);
+                    }
+                } else {
+                    memoryFeedback.textContent = '짝이 아닙니다. 다시 시도하세요.';
+                    memoryFeedback.style.color = 'red';
+                    unflipCards();
+                }
+            }
+
+            function disableCards() {
+                firstCard.removeEventListener('click', flipCard);
+                secondCard.removeEventListener('click', flipCard);
+                resetBoard();
+            }
+
+            function unflipCards() {
+                setTimeout(() => {
+                    firstCard.classList.remove('flipped');
+                    secondCard.classList.remove('flipped');
+                    resetBoard();
+                }, 1000);
+            }
+
+            function resetBoard() {
+                [firstCard, secondCard, lockBoard] = [null, null, false];
+            }
+
+            function openPasswordModal() {
+                passwordModal.classList.remove('hidden');
+                passwordFeedback.textContent = '';
+                finalPasswordInput.value = '';
+
+                // 수집된 숫자들을 표시하여 플레이어에게 힌트 제공
+                const currentPasswordClues = Object.values(collectedDigits).filter(d => d !== null).join('');
+                passwordFeedback.textContent = `현재까지 모인 힌트 조각들: ${currentPasswordClues}`;
+                passwordFeedback.style.color = '#555';
+            }
+
+            // 초기 상태 설정: 모달 및 종료 화면 숨김
+            passwordModal.classList.add('hidden');
+            gameEndScreen.classList.add('hidden');
+            puzzleOverlay.classList.add('hidden');
+        });
+        /* JavaScript 끝 */
     </script>
-  </body>
-</html>
+</body>
+</html>```
