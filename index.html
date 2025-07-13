@@ -103,21 +103,24 @@
         /* 핫스팟 기본 스타일 */
         .hotspot {
             position: absolute;
-            /* border: 2px dashed rgba(255, 0, 0, 0.5); /* 개발 중 시각화용, 배포 시 제거 */
+            background-color: rgba(255, 255, 0, 0.0); /* 평소에는 투명 */
+            opacity: 0; /* 평소에는 투명 */
             cursor: pointer;
             z-index: 10;
-            transition: background-color 0.2s;
+            transition: background-color 0.3s ease, opacity 0.3s ease; /* 부드러운 전환 효과 */
         }
 
         .hotspot:hover {
-            background-color: rgba(255, 255, 0, 0.1); /* 마우스 오버 시 효과 */
+            background-color: rgba(255, 255, 0, 0.3); /* 마우스 오버 시 반투명 노란색 */
+            opacity: 1; /* 마우스 오버 시 완전히 보임 */
         }
 
         /* 각 핫스팟의 위치와 크기 (제공된 이미지를 보고 정밀 조정) */
-        #hotspot-monitor { top: 39%; left: 88%; width: 8%; height: 18%; } /* 우측 책상 위의 모니터 */
-        #hotspot-blackboard { top: 25%; left: 28%; width: 44%; height: 30%; } /* 중앙 칠판 */
-        #hotspot-open-book { top: 70%; left: 47%; width: 3%; height: 3%; } /* 가장 가까운 책상 위의 펼쳐진 책 */
-        #hotspot-projector { top: 5%; left: 47%; width: 7%; height: 8%; } /* 천장에 달린 빔 프로젝터 */
+        #hotspot-monitor { top: 38.5%; left: 79%; width: 5.5%; height: 21%; } /* 우측 책상 위의 모니터 화면 */
+        #hotspot-blackboard { top: 25%; left: 25%; width: 50%; height: 30%; } /* 중앙 칠판 전체 */
+        #hotspot-open-book { top: 69.5%; left: 46%; width: 5.5%; height: 6%; } /* 가장 가까운 책상 위의 펼쳐진 책 */
+        #hotspot-projector { top: 5%; left: 47%; width: 8%; height: 8%; } /* 천장에 달린 빔 프로젝터 */
+        #hotspot-left-speaker { top: 15%; left: 14%; width: 8%; height: 20%; } /* 왼쪽 벽 스피커 */
         #hotspot-door { top: 20%; left: 87%; width: 10%; height: 65%; } /* 교실 문 (탈출 오브젝트) */
 
         /* 타이머 스타일 */
@@ -338,7 +341,8 @@
         <div id="game-timer">00:00</div> <!-- 시간 표시 요소 추가 -->
         <div id="room-display">
             <!--
-                ***** 이 부분이 수정되었습니다! classroom.jpg 파일을 이 index.html 파일과 같은 폴더에 넣어주세요. *****
+                ***** 이 부분이 'classroom.jpg'로 설정되어 있습니다. *****
+                ***** 'classroom.jpg' 파일을 이 'index.html' 파일과 같은 폴더에 넣어주세요! *****
             -->
             <img id="room-image" src="classroom.jpg" alt="초등학교 교실">
 
@@ -347,6 +351,7 @@
             <div class="hotspot" id="hotspot-blackboard"></div>
             <div class="hotspot" id="hotspot-open-book"></div>
             <div class="hotspot" id="hotspot-projector"></div>
+            <div class="hotspot" id="hotspot-left-speaker"></div> <!-- 왼쪽 벽 스피커 핫스팟 추가 -->
             <div class="hotspot" id="hotspot-door"></div>
         </div>
 
@@ -407,6 +412,7 @@
             const hotspotBlackboard = document.getElementById('hotspot-blackboard');
             const hotspotOpenBook = document.getElementById('hotspot-open-book'); // 책상 위 펼쳐진 책
             const hotspotProjector = document.getElementById('hotspot-projector');
+            const hotspotLeftSpeaker = document.getElementById('hotspot-left-speaker'); // 새로 추가된 왼쪽 벽 스피커
             const hotspotDoor = document.getElementById('hotspot-door');
 
             // 타이머 요소
@@ -491,13 +497,19 @@
             // 수학 문제 3: 책 (비밀번호 세 번째 숫자 '6' 획득)
             hotspotOpenBook.addEventListener('click', () => startMathProblem(
                 'open-book',
-                '세 자리 수 123의 각 자리 숫자의 합은 무엇일까요?', // 1+2+3 = 6
+                '가로 2cm, 세로 3cm인 직육면체의 부피가 36cm³일 때, 높이 x는 몇 cm일까요?', // 2*3*x = 36 => 6x = 36 => x = 6
                 '6',
                 'digit3'
             ));
 
-            // 미니게임: 빔 프로젝터 (메모리 카드 게임, 완료 시 비밀번호 네 번째 숫자 '3' 획득)
+            // 빔 프로젝터 (메모리 카드 게임, 완료 시 비밀번호 네 번째 숫자 '3' 획득)
             hotspotProjector.addEventListener('click', startMemoryGame);
+
+            // 왼쪽 벽 스피커 (힌트 제공)
+            hotspotLeftSpeaker.addEventListener('click', () => showHint(
+                '왼쪽 스피커',
+                '비밀번호의 마지막 숫자는 3입니다. 빔 프로젝터와 관련 있을지도 몰라요!'
+            ));
 
 
             // 교실 문 클릭 (탈출 시도)
@@ -768,4 +780,4 @@
         /* JavaScript 끝 */
     </script>
 </body>
-</html>```
+</html>
